@@ -9,6 +9,7 @@ Board::Board(int width, int height)
     this->placementstones = 0;
     this->placementphase = false;
     // printf("Setup board with %i x %i", this->width, this->height);
+    edgecapture = true;
     reset();
 }
 
@@ -20,7 +21,7 @@ Board::Board(int width, int height, int placementstones)
     territorymap = new int[width * height];
     this->placementstones = placementstones;
     this->placementphase = true;
-
+    edgecapture = true;
     // printf("Setup board with %i x %i", this->width, this->height);
     reset();
 }
@@ -379,6 +380,11 @@ bool Board::Anvil(Coord x)
     // {
     //     return true;
     // }
+    //Edge
+    if (edgecapture && (x.i == -1 || x.i == width || x.j == -1 || x.j == height))
+    {
+        return true;
+    }
     return Owner(x) == active_player;
 }
 

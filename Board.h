@@ -37,6 +37,7 @@ private:
 
 public:
     bool placementphase;
+    bool edgecapture;
     int width, height;
     int score[2];
     int winner = -1;

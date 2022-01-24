@@ -6,6 +6,21 @@ Board::Board(int width, int height)
     this->height = height;
     data = new int[width * height];
     territorymap = new int[width * height];
+    this->placementstones = 0;
+    this->placementphase = false;
+    // printf("Setup board with %i x %i", this->width, this->height);
+    reset();
+}
+
+Board::Board(int width, int height, int placementstones)
+{
+    this->width = width;
+    this->height = height;
+    data = new int[width * height];
+    territorymap = new int[width * height];
+    this->placementstones = placementstones;
+    this->placementphase = true;
+
     // printf("Setup board with %i x %i", this->width, this->height);
     reset();
 }
@@ -60,6 +75,10 @@ vector<Move> Board::GetLegalMoves(Coord start)
 
 bool Board::IsLegal(Move m)
 {
+    if (m.i0 == -1 && placementphase)
+    {
+        return (!data[m.i1]);
+    }
     Coord a = IndexToCoord(m.i0);
     Coord b = IndexToCoord(m.i1);
     if ((data[m.i0] & BLACK) == active_player)
@@ -119,20 +138,35 @@ void Board::Capture(Coord b, int dx, int dy)
 
 void Board::MakeMove(Move m)
 {
-    Coord a = IndexToCoord(m.i0);
-    Coord b = IndexToCoord(m.i1);
+    if (m.i0 == -1 && placementphase)
+    {
+        data[m.i1] = (active_player | PIECE);
+        if (active_player == BLACK)
+        {
+            remainingplacementstones--;
+        }
+        if (remainingplacementstones <= 0)
+        {
+            placementphase = false;
+        }
+    }
+    else
+    {
+        Coord a = IndexToCoord(m.i0);
+        Coord b = IndexToCoord(m.i1);
 
-    data[m.i1] = data[m.i0];
-    data[m.i0] = 0;
-    /*Capture*/
-    Capture(b, 0, 1);
-    Capture(b, 0, -1);
-    Capture(b, 1, 0);
-    Capture(b, -1, 0);
+        data[m.i1] = data[m.i0];
+        data[m.i0] = 0;
+        /*Capture*/
+        Capture(b, 0, 1);
+        Capture(b, 0, -1);
+        Capture(b, 1, 0);
+        Capture(b, -1, 0);
 
-    history.push_back(m);
-    updateScores();
+        updateScores();
+    }
     //Switch Player
+    history.push_back(m);
     active_player = 1 - active_player;
 }
 
@@ -143,6 +177,16 @@ int Board::CoordToIndex(Coord x)
 
 void Board::reset()
 {
+    if (placementstones > 0)
+    {
+        placementphase = true;
+        remainingplacementstones = placementstones;
+    }
+    else
+    {
+        placementphase = false;
+        remainingplacementstones = 0;
+    }
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)
@@ -151,15 +195,24 @@ void Board::reset()
             territorymap[CoordToIndex({i, j})] = -1;
         }
     }
-    for (int i = 0; i < width; i++)
+
+    if (placementstones == 0)
     {
-        data[CoordToIndex(Coord{i, 0})] = PIECE | BLACK;
-        data[CoordToIndex(Coord{i, 1})] = PIECE | BLACK;
-        data[CoordToIndex(Coord{i, height - 2})] = PIECE | WHITE;
-        data[CoordToIndex(Coord{i, height - 1})] = PIECE | WHITE;
+        for (int i = 0; i < width; i++)
+        {
+            data[CoordToIndex(Coord{i, 0})] = PIECE | BLACK;
+            data[CoordToIndex(Coord{i, 1})] = PIECE | BLACK;
+            data[CoordToIndex(Coord{i, height - 2})] = PIECE | WHITE;
+            data[CoordToIndex(Coord{i, height - 1})] = PIECE | WHITE;
+        }
+        score[WHITE] = 2 * width;
+        score[BLACK] = 2 * width;
     }
-    score[WHITE] = 2 * width;
-    score[BLACK] = 2 * width;
+    else
+    {
+        score[WHITE] = 0;
+        score[BLACK] = 0;
+    }
     active_player = WHITE;
     winner = -1;
     history.clear();

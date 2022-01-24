@@ -12,6 +12,10 @@ int main(int argc, char const *argv[])
     {
         board = new Board(atoi(argv[1]), atoi(argv[2]));
     }
+    else if (argc == 4)
+    {
+        board = new Board(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
+    }
     else
     {
         board = new Board(8, 8);

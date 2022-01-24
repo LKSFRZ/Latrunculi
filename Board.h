@@ -29,15 +29,19 @@ class Board
 private:
     int *data;
     int active_player;
-
     int *territorymap;
+    int placementstones;
+    int remainingplacementstones;
+
     vector<Move> history;
 
 public:
+    bool placementphase;
     int width, height;
     int score[2];
     int winner = -1;
     Board(int width, int height);
+    Board(int width, int height, int placementstones);
     Board(int *data);
     vector<Move> GetLegalMoves();
     vector<Move> GetLegalMoves(Coord start);

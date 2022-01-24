@@ -6,8 +6,8 @@ IO::IO(bool *quit, Board *board)
     this->board = board;
 
     TTF_Init();
-    scale = WIDTH/(max(board->width, board->height) + 2);
-    Sans = TTF_OpenFont("fonts/FreeSerifBold.ttf", (scale * 62)/160);
+    scale = WIDTH / (max(board->width, board->height) + 2);
+    Sans = TTF_OpenFont("fonts/FreeSerifBold.ttf", (scale * 62) / 160);
     if (Sans == NULL)
     {
         fprintf(stderr, "error: font not found\n");
@@ -35,7 +35,7 @@ IO::IO(bool *quit, Board *board)
     SDL_SetWindowResizable(gWindow,
                            SDL_TRUE);
 
-    scale = WIDTH/(max(board->width, board->height) + 2);
+    scale = WIDTH / (max(board->width, board->height) + 2);
     loadAssets();
     selected = -1;
 }
@@ -141,7 +141,6 @@ void IO::Render()
     }
 
     SDL_BlitScaled(Assets, &srect, gCurrentSurface, &drect);
-
 
     if (selected != -1)
     {
@@ -340,21 +339,32 @@ void IO::GetMove(int player)
             }
             if (e.type == SDL_MOUSEBUTTONDOWN)
             {
+
                 int clicked = Index(e.button.x, e.button.y);
-                int piece = board->AtPos(board->IndexToCoord(clicked));
-                // printf("piece: %i, player %i\n", piece, board->Player());
-                if (selected != -1 && clicked != -1 && board->IsLegal(Move{selected, clicked}))
+                if (board->placementphase)
                 {
-                    board->MakeMove({selected, clicked});
-                    mademove = true;
-                    // printf("%i -> %i\n", selected, clicked);
-                    selected = -1;
+                    if (board->IsLegal({-1, clicked}))
+                    {
+                        board->MakeMove({-1, clicked});
+                    }
                 }
-                else if (piece && board->Player() == (piece & BLACK))
+                else
                 {
-                    selected = clicked;
+                    int piece = board->AtPos(board->IndexToCoord(clicked));
+                    // printf("piece: %i, player %i\n", piece, board->Player());
+                    if (selected != -1 && clicked != -1 && board->IsLegal(Move{selected, clicked}))
+                    {
+                        board->MakeMove({selected, clicked});
+                        mademove = true;
+                        // printf("%i -> %i\n", selected, clicked);
+                        selected = -1;
+                    }
+                    else if (piece && board->Player() == (piece & BLACK))
+                    {
+                        selected = clicked;
+                    }
+                    dragging = true;
                 }
-                dragging = true;
             }
 
             if (e.type == SDL_MOUSEBUTTONUP)

@@ -24,11 +24,12 @@ private:
     SDL_Surface *gCurrentSurface = NULL;
     TTF_Font *Sans;
     Board *board;
+    int scale;
     int selected;
     bool * quit;
     bool dragging;
-    string cols[8] = {"A", "B", "C", "D", "E", "F", "G", "H"};
-    string rows[8] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII"};
+    string cols[20] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U"};
+    string rows[20] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "IXX", "XX"};
     bool showscore = false;
 public:
     IO(bool * quit, Board * board);

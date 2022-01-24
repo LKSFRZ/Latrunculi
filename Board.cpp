@@ -6,6 +6,7 @@ Board::Board(int width, int height)
     this->height = height;
     data = new int[width * height];
     territorymap = new int[width * height];
+    // printf("Setup board with %i x %i", this->width, this->height);
     reset();
 }
 
@@ -16,9 +17,9 @@ Board::Board(int *data)
 vector<Move> Board::GetLegalMoves()
 {
     vector<Move> legalmoves;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < width; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < height; j++)
         {
             if (Owner(Coord{i, j}) == active_player)
             {
@@ -137,7 +138,7 @@ void Board::MakeMove(Move m)
 
 int Board::CoordToIndex(Coord x)
 {
-    return x.i + 8 * x.j;
+    return x.i + width * x.j;
 }
 
 void Board::reset()
@@ -157,8 +158,8 @@ void Board::reset()
         data[CoordToIndex(Coord{i, height - 2})] = PIECE | WHITE;
         data[CoordToIndex(Coord{i, height - 1})] = PIECE | WHITE;
     }
-    score[WHITE] = 16;
-    score[BLACK] = 16;
+    score[WHITE] = 2 * width;
+    score[BLACK] = 2 * width;
     active_player = WHITE;
     winner = -1;
     history.clear();

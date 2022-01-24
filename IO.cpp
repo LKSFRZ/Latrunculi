@@ -6,7 +6,8 @@ IO::IO(bool *quit, Board *board)
     this->board = board;
 
     TTF_Init();
-    Sans = TTF_OpenFont("fonts/FreeSerifBold.ttf", 62);
+    scale = WIDTH/(max(board->width, board->height) + 2);
+    Sans = TTF_OpenFont("fonts/FreeSerifBold.ttf", (scale * 62)/160);
     if (Sans == NULL)
     {
         fprintf(stderr, "error: font not found\n");
@@ -33,6 +34,8 @@ IO::IO(bool *quit, Board *board)
     }
     SDL_SetWindowResizable(gWindow,
                            SDL_TRUE);
+
+    scale = WIDTH/(max(board->width, board->height) + 2);
     loadAssets();
     selected = -1;
 }
@@ -53,14 +56,15 @@ void IO::plotboard()
 {
     SDL_Rect drect;
     int r, g, b;
-    for (int i = 0; i < 8; i++)
+    // printf("board dimensions; %i %i\n", board->height, board->width);
+    for (int i = 0; i < board->width; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < board->height; j++)
         {
-            drect.x = (i + 1) * SCALE;
-            drect.y = (j + 1) * SCALE;
-            drect.w = SCALE;
-            drect.h = SCALE;
+            drect.x = (i + 1) * scale;
+            drect.y = (j + 1) * scale;
+            drect.w = scale;
+            drect.h = scale;
             if ((i + j) % 2)
             {
                 r = 0x80;
@@ -115,20 +119,20 @@ void IO::Render()
     SDL_FillRect(gCurrentSurface, NULL, SDL_MapRGB(gCurrentSurface->format, 0xB0, 0xB0, 0xD5));
     SDL_Rect srect, drect;
 
-    drect.x = SCALE;
-    drect.y = drect.x;
-    drect.w = 8 * drect.x;
-    drect.h = drect.w;
+    // drect.x = scale;
+    // drect.y = drect.x;
+    // drect.w = 8 * drect.x;
+    // drect.h = drect.w;
 
-    SDL_BlitScaled(Background, NULL, gCurrentSurface, &drect);
+    // SDL_BlitScaled(Background, NULL, gCurrentSurface, &drect);
     plotboard();
 
     if (selected != -1)
     {
-        drect.x = ((selected % 8) + 1) * SCALE + 3;
-        drect.y = ((selected / 8) + 1) * SCALE + 3;
-        drect.w = SCALE - 6;
-        drect.h = SCALE - 6;
+        drect.x = (board->IndexToCoord(selected).i + 1) * scale + 3;
+        drect.y = (board->IndexToCoord(selected).j + 1) * scale + 3;
+        drect.w = scale - 6;
+        drect.h = scale - 6;
 
         srect.w = 128;
         srect.h = 128;
@@ -137,6 +141,8 @@ void IO::Render()
     }
 
     SDL_BlitScaled(Assets, &srect, gCurrentSurface, &drect);
+
+
     if (selected != -1)
     {
         srect.w = 128;
@@ -146,22 +152,22 @@ void IO::Render()
         vector<Move> legalmoves = board->GetLegalMoves(board->IndexToCoord(selected));
         for (Move m : legalmoves)
         {
-            drect.x = (board->IndexToCoord(m.i1).i + 1) * SCALE + 3;
-            drect.y = (board->IndexToCoord(m.i1).j + 1) * SCALE + 3;
-            drect.w = SCALE - 6;
-            drect.h = SCALE - 6;
+            drect.x = (board->IndexToCoord(m.i1).i + 1) * scale + 3;
+            drect.y = (board->IndexToCoord(m.i1).j + 1) * scale + 3;
+            drect.w = scale - 6;
+            drect.h = scale - 6;
             SDL_BlitScaled(Assets, &srect, gCurrentSurface, &drect);
         }
     }
     SDL_Surface *surfaceMessage;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < board->width; i++)
     {
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < board->height; j++)
         {
-            drect.x = (i + 1) * SCALE + 3;
-            drect.y = (j + 1) * SCALE + 3;
-            drect.w = SCALE - 6;
-            drect.h = SCALE - 6;
+            drect.x = (i + 1) * scale + 3;
+            drect.y = (j + 1) * scale + 3;
+            drect.w = scale - 6;
+            drect.h = scale - 6;
 
             int piece = board->AtPos(Coord{i, j});
             if (piece)
@@ -170,11 +176,11 @@ void IO::Render()
                 srect.h = 128;
                 srect.x = 128 * (piece % 4);
                 srect.y = 128 * (piece / 4);
-                if (dragging && selected == (i + 8 * j))
+                if (dragging && selected == board->CoordToIndex(Coord{i, j}))
                 {
                     SDL_GetMouseState(&drect.x, &drect.y);
-                    drect.x -= SCALE / 2;
-                    drect.y -= SCALE / 2;
+                    drect.x -= scale / 2;
+                    drect.y -= scale / 2;
                     SDL_BlitScaled(pieces[piece & 1], NULL, gCurrentSurface, &drect);
                 }
                 else
@@ -191,42 +197,34 @@ void IO::Render()
 
     // SDL_BlitSurface(surfaceMessage, NULL, gCurrentSurface, &drect);
 
-    if (board->winner != -1)
+    drect.x = (board->width + 1) * scale + 10;
+    drect.y = scale + 3;
+    for (int i = 0; i < board->height; i++)
     {
-        drect.x = 10 * SCALE + 3;
-        drect.y = 10 * SCALE + 3;
-        drect.w = SCALE - 6;
-        drect.h = SCALE - 6;
-        SDL_FillRect(gCurrentSurface, &drect, SDL_MapRGB(gCurrentSurface->format, 0xFF - 0xFF * board->winner, 0xFF - 0xFF * board->winner, 0xFF - 0xFF * board->winner));
-    }
-    drect.x = 9 * SCALE + 10;
-    drect.y = SCALE + 3;
-    for (int i = 0; i < 8; i++)
-    {
-        surfaceMessage = TTF_RenderText_Solid(Sans, rows[(7 - i)].c_str(), SDL_Color{0, 0, 0x10});
-        drect.y = (i + 1 + 0.3) * SCALE + 3;
+        surfaceMessage = TTF_RenderText_Solid(Sans, rows[(board->height - 1 - i)].c_str(), SDL_Color{0, 0, 0x10});
+        drect.y = (i + 1 + 0.3) * scale + 3;
         SDL_BlitSurface(surfaceMessage, NULL, gCurrentSurface, &drect);
         delete surfaceMessage;
     }
-    drect.y = (8 + 1) * SCALE + 3;
-    for (int i = 0; i < 8; i++)
+    drect.y = (board->height + 1) * scale + 3;
+    for (int i = 0; i < board->width; i++)
     {
         surfaceMessage = TTF_RenderText_Solid(Sans, cols[i].c_str(), SDL_Color{0, 0, 0x10});
-        drect.x = (i + 1 + 0.3) * SCALE + 3;
+        drect.x = (i + 1 + 0.3) * scale + 3;
         SDL_BlitSurface(surfaceMessage, NULL, gCurrentSurface, &drect);
         delete surfaceMessage;
     }
 
     if (showscore)
     {
-        drect.x = SCALE / 2;
-        drect.y = 8 * SCALE + 3;
+        drect.x = scale / 2;
+        drect.y = board->height * scale + 3;
         surfaceMessage = TTF_RenderText_Solid(Sans, to_string(board->score[WHITE]).c_str(), SDL_Color{0, 0, 0x10});
         SDL_BlitSurface(surfaceMessage, NULL, gCurrentSurface, &drect);
         delete surfaceMessage;
 
-        drect.x = SCALE / 2;
-        drect.y = SCALE + 3;
+        drect.x = scale / 2;
+        drect.y = scale + 3;
         surfaceMessage = TTF_RenderText_Solid(Sans, to_string(board->score[BLACK]).c_str(), SDL_Color{0, 0, 0x10});
         SDL_BlitSurface(surfaceMessage, NULL, gCurrentSurface, &drect);
         delete surfaceMessage;
@@ -242,7 +240,7 @@ void IO::loadAssets()
     Assets = loadSurface("assets.bmp");
     pieces[WHITE] = loadSurface("sprites/white.bmp");
     pieces[BLACK] = loadSurface("sprites/black.bmp");
-    Background = SDL_CreateRGBSurface(0, SCALE * 8, SCALE * 8, 32,
+    Background = SDL_CreateRGBSurface(0, scale * 8, scale * 8, 32,
                                       0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
     SDL_FillRect(Background, NULL, SDL_MapRGB(Background->format, 0, 0, 0));
     for (int i = 0; i < 8; i++)
@@ -250,10 +248,10 @@ void IO::loadAssets()
         for (int j = 0; j < 8; j++)
         {
             SDL_Rect drect;
-            drect.x = i * SCALE;
-            drect.y = j * SCALE;
-            drect.w = SCALE;
-            drect.h = SCALE;
+            drect.x = i * scale;
+            drect.y = j * scale;
+            drect.w = scale;
+            drect.h = scale;
             int piece = board->AtPos(Coord{i, j});
             int r, g, b;
             // printf("Piece: %i\n", piece);
@@ -295,16 +293,16 @@ void IO::loadAssets()
 int IO::Index(int x, int y)
 {
     int field = -1;
-    int widthoffield = SCALE;
+    int widthoffield = scale;
 
     int i = x / widthoffield;
     int j = y / widthoffield;
 
-    if (i < 1 || i > 8 || j < 1 || j > 8)
+    if (i < 1 || i > board->width || j < 1 || j > board->height)
     {
         return -1;
     }
-    return (i - 1) + 8 * (j - 1);
+    return (i - 1) + board->width * (j - 1);
 }
 
 void IO::WaitOnQuit()

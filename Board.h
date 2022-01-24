@@ -27,7 +27,6 @@ bool operator==(Coord &lhs, Coord &rhs);
 class Board
 {
 private:
-    int width, height;
     int *data;
     int active_player;
 
@@ -35,6 +34,7 @@ private:
     vector<Move> history;
 
 public:
+    int width, height;
     int score[2];
     int winner = -1;
     Board(int width, int height);
